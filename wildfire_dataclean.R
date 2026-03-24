@@ -34,7 +34,6 @@ print(head(df))
 # 1.b Unique ID
 # -----------------------------------------------------------------------------
 SEQ_LEN <- 75L
-#setorder(df, latitude, longitude, datetime)
 
 df[, row_in_group := (seq_len(.N) - 1L) %% SEQ_LEN + 1L]
 df[, seq_id       := (seq_len(.N) - 1L) %/% SEQ_LEN + 1L]
@@ -44,8 +43,6 @@ cat("Unique sequence IDs:", uniqueN(df$seq_id), "\n")
 # -----------------------------------------------------------------------------
 # 4. Prepare 75-day sequences
 # -----------------------------------------------------------------------------
-FILL_VALUE <- 32767.0
-SEQ_LEN    <- 75L
 FEATURES <- c("pr", "rmax", "rmin", "sph", "srad", "tmmn", "tmmx",
               "vs", "bi", "fm100", "fm1000", "erc", "etr", "pet", "vpd")
 
@@ -76,5 +73,4 @@ rm(flat_dynamic, static_part)
 
 
 saveRDS(flat_df, "data/intermediate/wildfire_cleaned_flat.rds")
-saveRDS(df, "data/intermediate/wildfire_cleaned.rds")
-
+saveRDS(df, "data/intermediate/wildfire_cleaned.rds")df[, .N, by = .(latitude, longitude)][N %% 75 != 0]
