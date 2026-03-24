@@ -34,13 +34,10 @@ print(head(df))
 # 1.b Unique ID
 # -----------------------------------------------------------------------------
 SEQ_LEN <- 75L
-setorder(df, latitude, longitude, datetime)
+#setorder(df, latitude, longitude, datetime)
 
-df[, row_in_group := seq_len(.N), by = .(latitude, longitude)]
-df[, block_num    := (row_in_group - 1L) %/% SEQ_LEN]
-df[, seq_id       := .GRP, by = .(latitude, longitude, block_num)]
-
-df[, c("row_in_group", "block_num") := NULL]  # drop helpers
+df[, row_in_group := (seq_len(.N) - 1L) %% SEQ_LEN + 1L]
+df[, seq_id       := (seq_len(.N) - 1L) %/% SEQ_LEN + 1L]
 
 cat("Unique sequence IDs:", uniqueN(df$seq_id), "\n")
 
