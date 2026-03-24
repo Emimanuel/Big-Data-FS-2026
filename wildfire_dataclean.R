@@ -73,4 +73,4 @@ rm(flat_dynamic, static_part)
 
 
 saveRDS(flat_df, "data/intermediate/wildfire_cleaned_flat.rds")
-saveRDS(df, "data/intermediate/wildfire_cleaned.rds")df[, .N, by = .(latitude, longitude)][N %% 75 != 0]
+saveRDS(df, "data/intermediate/wildfire_cleaned.rds")
