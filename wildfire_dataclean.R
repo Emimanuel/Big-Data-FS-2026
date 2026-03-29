@@ -11,8 +11,6 @@
 # -----------------------------------------------------------------------------
 library(data.table)   # fast I/O and data manipulation
 library(ggplot2)      # visualisation
-library(caret)        # createDataPartition / confusionMatrix
-library(keras3)       # LSTM via TensorFlow/Keras
 library(future.apply)
 plan(multisession)
 

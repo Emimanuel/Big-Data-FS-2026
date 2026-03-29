@@ -4,7 +4,7 @@
 library(ggplot2)
 library(here)
 library(tidymodels)
-library(xgboost)
+library(ranger)
 library(vip)
 library(future)
 plan(multisession, workers = parallel::detectCores() - 1)
@@ -12,7 +12,7 @@ plan(multisession, workers = parallel::detectCores() - 1)
 # -----------------------------------------------------------------------------
 # 1. Load data
 # -----------------------------------------------------------------------------
-seed(1)
+set.seed(1)
 flat_df <- readRDS(here("data/intermediate/wildfire_cleaned_flat.rds"))
 flat_df <- flat_df[sample.int(nrow(flat_df), 500), ]
 
@@ -38,27 +38,27 @@ rec <- recipe(Wildfire ~ ., data = train) |>
 # -----------------------------------------------------------------------------
 # 4. Model spec
 # -----------------------------------------------------------------------------
-xgb_spec <- boost_tree(
-  trees          = tune(),
-  tree_depth     = tune(),
-  learn_rate     = tune(),
-  min_n          = tune(),
-  loss_reduction = tune(),
-  sample_size    = tune(),
-  mtry           = tune()
+rf_spec <- rand_forest(
+  trees = tune(),
+  mtry  = tune(),
+  min_n = tune()
 ) |>
-  set_engine("xgboost", nthread = 1) |>   # nthread = 1 since doParallel handles parallelism
+  set_engine(
+    "ranger",
+    importance      = "impurity",   # enables vip() later
+    num.threads     = 1             # parallelism handled by future/doParallel
+  ) |>
   set_mode("classification")
 
 # -----------------------------------------------------------------------------
 # 5. Workflow
 # -----------------------------------------------------------------------------
-xgb_wf <- workflow() |>
+rf_wf <- workflow() |>
   add_recipe(rec) |>
-  add_model(xgb_spec)
+  add_model(rf_spec)
 
 # -----------------------------------------------------------------------------
-# 6. Cross-validation
+# 6. Cross-validation  (identical folds to XGB script)
 # -----------------------------------------------------------------------------
 folds <- vfold_cv(train, v = 10, strata = Wildfire)
 
@@ -66,14 +66,10 @@ folds <- vfold_cv(train, v = 10, strata = Wildfire)
 # 7. Tuning grid
 # -----------------------------------------------------------------------------
 set.seed(42)
-xgb_grid <- grid_space_filling(
+rf_grid <- grid_space_filling(
   trees(range = c(200, 1000)),
-  tree_depth(range = c(3, 8)),
-  learn_rate(range = c(-2, -1)),
+  mtry(range  = c(5, floor(ncol(train) * 0.8))),
   min_n(range = c(5, 30)),
-  loss_reduction(),
-  sample_prop(range = c(0.5, 1.0)),
-  mtry(range = c(5, floor(ncol(train) * 0.8))),
   size = 30
 )
 
@@ -83,9 +79,9 @@ xgb_grid <- grid_space_filling(
 doParallel::registerDoParallel()
 
 tune_res <- tune_grid(
-  xgb_wf,
+  rf_wf,
   resamples = folds,
-  grid      = xgb_grid,
+  grid      = rf_grid,
   metrics   = metric_set(roc_auc, pr_auc, f_meas),
   control   = control_grid(save_pred = TRUE, verbose = TRUE, event_level = "second")
 )
@@ -94,7 +90,7 @@ tune_res <- tune_grid(
 # 9. Finalize and evaluate
 # -----------------------------------------------------------------------------
 best_params <- select_best(tune_res, metric = "roc_auc")
-final_wf    <- finalize_workflow(xgb_wf, best_params)
+final_wf    <- finalize_workflow(rf_wf, best_params)
 final_fit   <- last_fit(final_wf, split)
 
 # Metrics
@@ -106,7 +102,7 @@ collect_predictions(final_fit) |>
 
 # ROC curve
 collect_predictions(final_fit) |>
-  roc_curve(Wildfire, .pred_Yes) |>
+  roc_curve(Wildfire, .pred_Yes, event_level = "second") |>
   autoplot()
 
 # Variable importance
