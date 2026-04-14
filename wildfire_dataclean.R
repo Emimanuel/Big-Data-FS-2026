@@ -1,4 +1,4 @@
-# =============================================================================
+ # =============================================================================
 # FireCastRL: Wildfire Forecasting (GRIDMET + IRWIN, 2014-2025)
 # R implementation of the wildfire-forecasting-get-started.ipynb notebook
 # =============================================================================
@@ -48,7 +48,7 @@ FEATURES <- c("pr", "rmax", "rmin", "sph", "srad", "tmmn", "tmmx",
 # 4.5 prepare wide
 # -----------------------------------------------------------------------------
 anchor       <- 61L
-static_cols  <- c("latitude", "longitude", "datetime", "Wildfire")
+static_cols  <- c("latitude", "longitude", "datetime", "Wildfire", "row_in_group")
 dynamic_cols <- setdiff(names(df), c(static_cols, "seq_id", "t_idx"))
 
 # Offset relative to anchor so columns are t-60, t-1, t0, t+1 etc.

@@ -12,9 +12,9 @@ plan(multisession, workers = parallel::detectCores() - 1)
 # -----------------------------------------------------------------------------
 # 1. Load data
 # -----------------------------------------------------------------------------
-seed(1)
+set.seed(1)
 flat_df <- readRDS(here("data/intermediate/wildfire_cleaned_flat.rds"))
-flat_df <- flat_df[sample.int(nrow(flat_df), 500), ]
+#flat_df <- flat_df[sample.int(nrow(flat_df), 500), ]
 
 model_df <- flat_df |>
   mutate(Wildfire = factor(Wildfire, levels = c("No", "Yes"))) |>

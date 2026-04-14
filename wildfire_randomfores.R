@@ -14,7 +14,7 @@ plan(multisession, workers = parallel::detectCores() - 1)
 # -----------------------------------------------------------------------------
 set.seed(1)
 flat_df <- readRDS(here("data/intermediate/wildfire_cleaned_flat.rds"))
-flat_df <- flat_df[sample.int(nrow(flat_df), 500), ]
+#flat_df <- flat_df[sample.int(nrow(flat_df), 500), ]
 
 model_df <- flat_df |>
   mutate(Wildfire = factor(Wildfire, levels = c("No", "Yes"))) |>
@@ -65,7 +65,6 @@ folds <- vfold_cv(train, v = 10, strata = Wildfire)
 # -----------------------------------------------------------------------------
 # 7. Tuning grid
 # -----------------------------------------------------------------------------
-set.seed(42)
 rf_grid <- grid_space_filling(
   trees(range = c(200, 1000)),
   mtry(range  = c(5, floor(ncol(train) * 0.8))),
@@ -88,7 +87,9 @@ tune_res <- tune_grid(
 
 # -----------------------------------------------------------------------------
 # 9. Finalize and evaluate
-# -----------------------------------------------------------------------------
+# ----------------------------------------------------
+
+-------------------------
 best_params <- select_best(tune_res, metric = "roc_auc")
 final_wf    <- finalize_workflow(rf_wf, best_params)
 final_fit   <- last_fit(final_wf, split)
