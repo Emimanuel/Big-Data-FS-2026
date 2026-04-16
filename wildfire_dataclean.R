@@ -67,8 +67,34 @@ flat_dynamic <- dcast(
 # Join static anchor info back
 flat_df <- static_part[flat_dynamic, on = "seq_id"]
 
+##remove enoded NF and numeric outcome
+flat_df <- flat_df[rowSums(flat_df == 32767, na.rm = TRUE) == 0, ]
+flat_df$Wildfire <- ifelse(flat_df$Wildfire == "Yes", 1, 0)
+
+# -----------------------------------------------------------------------------
+# 5 reduces size
+# -----------------------------------------------------------------------------
+# Count Yes and No
+n_yes <- sum(flat_df$Wildfire == "Yes")
+n_no  <- sum(flat_df$Wildfire == "No")
+
+# How many No rows to discard
+n_discard <- n_no - n_yes
+
+# Row indices to drop (sampled from No rows)
+no_indices    <- which(flat_df$Wildfire == "No")
+discard_indices <- sample(no_indices, size = n_discard)
+
+# Keep everything except discarded rows
+balanced_df <- flat_df[-discard_indices, ]
+
+# Verify
+table(balanced_df$Wildfire)
+
+
 rm(flat_dynamic, static_part)
 
 
+saveRDS(balanced_df, "data/intermediate/wildfire_cleaned_balanced.rds")
 saveRDS(flat_df, "data/intermediate/wildfire_cleaned_flat.rds")
 saveRDS(df, "data/intermediate/wildfire_cleaned.rds")
