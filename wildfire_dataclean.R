@@ -75,14 +75,14 @@ flat_df$Wildfire <- ifelse(flat_df$Wildfire == "Yes", 1, 0)
 # 5 reduces size
 # -----------------------------------------------------------------------------
 # Count Yes and No
-n_yes <- sum(flat_df$Wildfire == "Yes")
-n_no  <- sum(flat_df$Wildfire == "No")
+n_yes <- sum(flat_df$Wildfire == 1)
+n_no  <- sum(flat_df$Wildfire == 0)
 
 # How many No rows to discard
 n_discard <- n_no - n_yes
 
 # Row indices to drop (sampled from No rows)
-no_indices    <- which(flat_df$Wildfire == "No")
+no_indices    <- which(flat_df$Wildfire == 0)
 discard_indices <- sample(no_indices, size = n_discard)
 
 # Keep everything except discarded rows
